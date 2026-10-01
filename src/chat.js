@@ -466,7 +466,7 @@ function priceHtml({ids, P}){
     const sells = rows.filter(x => x.r.sell && x.c !== BM), buys = rows.filter(x => x.r.buy);
     const cheap = sells.reduce((a, x) => !a || x.r.sell < a.r.sell ? x : a, null);
     const pays = buys.reduce((a, x) => !a || x.r.buy > a.r.buy ? x : a, null);
-    let h = `<p>Preços de <b>${esc(label(id))}</b> agora:</p><div class="pricetab"><table class="prices"><thead><tr><th>Cidade</th><th class="n">Anunciado por</th><th class="n">Pedidos de compra pagam</th></tr></thead><tbody>`;
+    let h = `<p>Preços de <b>${esc(label(id))}</b> agora:</p><div class="pricetab"><table class="prices"><thead><tr><th>Cidade</th><th class="n">Menor anúncio</th><th class="n">Pedido de compra</th></tr></thead><tbody>`;
     h += rows.map(x => `<tr><td>${city(x.c)}</td>
       <td class="n${cheap && x === cheap ? ' best' : ''}">${x.r.sell && x.c !== BM ? `${fmt(x.r.sell)}<small>${ageText(x.r.sellDate)}</small>` : '<span class="nodata">sem anúncio</span>'}</td>
       <td class="n${pays && x === pays ? ' best' : ''}">${x.r.buy ? `${fmt(x.r.buy)}<small>${ageText(x.r.buyDate)}</small>` : '<span class="nodata">sem pedido</span>'}</td></tr>`).join('');
@@ -635,6 +635,7 @@ function applySettings(p){
   else if (p.budget < 0 && chat.budget){ chat.budget = 0; done.push(`contas por quantidade (${fmt(qty())} unidades), sem limite de prata`); }
   if (p.mode && p.mode !== chat.mode){ chat.mode = p.mode; done.push(p.mode === 'order' ? 'anunciando e esperando a venda' : 'vendendo na hora'); }
   if (p.focus != null && p.focus !== chat.focus){ chat.focus = p.focus; done.push(p.focus ? 'refino com foco' : 'refino sem foco'); }
+  if (done.length) ['g-premium', 'g-qty', 'g-cap'].forEach(id => $(id).dispatchEvent(new Event('change')));
   return done;
 }
 function mergeCtx(last, p){

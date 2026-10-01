@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e3e7e0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#152022" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Descubra o que dá lucro no mercado do Albion Online, servidor das Américas.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 3h24v16L16 30 4 19z' fill='%232d6a3e'/%3E%3C/svg%3E">
 <title>Mercador de Albion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,6 +51,7 @@ body{background:var(--ground);color:var(--ink);font:17px/1.5 var(--sans);font-va
 .prefs label{display:flex;align-items:center;gap:7px;cursor:pointer}
 .prefs input[type=checkbox]{accent-color:var(--ink);width:16px;height:16px}
 .prefs input[type=number]{width:84px;padding:4px 8px}
+.prefs-wrap>summary{display:none}
 
 /* abas */
 .tabs{display:flex;gap:26px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
@@ -247,6 +252,55 @@ table.prices .best{color:var(--gain);font-weight:700}
 .notes ol{margin:4px 0 0;padding-left:1.2em}
 @media (max-width:560px){.notes dl{grid-template-columns:1fr}.notes dd{margin-bottom:8px}}
 @media (max-width:520px){.brand h1{font-size:1.8rem}.verdict{font-size:1.25rem}.row2{grid-template-columns:1fr}.deal-result{text-align:left;align-items:flex-start}}
+/* celular */
+.ledger,.msg{scroll-margin-top:64px}
+@media (max-width:640px){
+  .page{padding-inline:12px;padding-block:14px 32px;gap:14px}
+  .top{gap:10px}
+  .brand h1{font-size:1.55rem}
+  .brand p{display:none}
+  .prefs-wrap{width:100%;background:var(--paper);border-radius:10px}
+  .prefs-wrap>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none;padding:10px 14px;font-size:.92rem;color:var(--muted);min-height:44px}
+  .prefs-wrap>summary::-webkit-details-marker{display:none}
+  .prefs-wrap>summary::after{content:"Mudar";color:var(--ink);font-weight:700;text-decoration:underline;flex:none}
+  .prefs-wrap[open]>summary::after{content:"Fechar"}
+  .prefs{flex-direction:column;align-items:stretch;gap:4px;padding:0 14px 12px}
+  .prefs label{min-height:44px;justify-content:space-between}
+  .prefs input[type=checkbox]{width:22px;height:22px;order:2}
+  .prefs input[type=number]{width:110px;font-size:16px;padding:8px 10px}
+  #g-last{padding-top:4px;font-size:.85rem}
+  .tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);margin-inline:-12px;padding-inline:12px}
+  .tabs{gap:18px;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  table.prices{font-size:.88rem}
+  table.prices th,table.prices td{padding:6px 6px}
+  table.prices th{white-space:normal;vertical-align:bottom;line-height:1.25}
+  .tabs button{font-size:1.05rem;padding:12px 0 10px}
+  .tabs button small{display:none}
+  .tabs button:last-child{margin-right:36px}
+  select,input[type=number],input[type=text],input[type=search],textarea{font-size:16px}
+  .bench{padding:14px}
+  .town{padding:8px 12px 8px 10px;min-height:42px;font-size:.95rem}
+  .choice{padding:10px 12px}
+  .go{min-height:48px}
+  .sugs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-12px;padding-inline:12px;padding-bottom:2px}
+  .sugs button{flex:none;min-height:40px}
+  .opts button,.fb button{min-height:40px}
+  details>summary{padding-block:6px}
+  .msg{padding:12px}
+  .msg.bot{border-radius:12px}
+  .msg.me{max-width:90%}
+  .opps{margin-inline:-4px}
+  .opp{padding:12px;border-left-width:4px}
+  .opp-title{font-size:1.05rem}
+  .deal{padding:12px}
+  .deal-main{flex-direction:column;gap:6px}
+  .deal-result{text-align:left;align-items:flex-start}
+  .ask{gap:6px;margin-inline:-12px;padding-inline:12px}
+  .ask input{padding:12px 12px}
+  .ask .go{padding:12px 14px;min-height:46px}
+  .receipt .ln{font-size:.9rem}
+  .notes dl{grid-template-columns:1fr}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -257,6 +311,8 @@ table.prices .best{color:var(--gain);font-weight:700}
       <h1>Mercador de Albion</h1>
       <p>Descubra o que dá lucro no mercado do servidor das Américas, com preços enviados pelos próprios jogadores.</p>
     </div>
+    <details class="prefs-wrap" id="prefs-wrap" open>
+    <summary id="prefs-sum">Ajustes</summary>
     <div class="prefs">
       <label for="g-premium"><input type="checkbox" id="g-premium" checked> Tenho Premium</label>
       <label for="g-qty">Contas para <input type="number" id="g-qty" value="100" min="1" step="10"> unidades</label>
@@ -264,8 +320,10 @@ table.prices .best{color:var(--gain);font-weight:700}
       <label for="g-auto"><input type="checkbox" id="g-auto"> Atualizar sozinho a cada 5 min</label>
       <span id="g-last">Nenhuma busca ainda</span>
     </div>
+    </details>
   </header>
 
+  <div class="tabbar">
   <nav class="tabs" role="tablist" aria-label="O que você quer fazer">
     <button role="tab" data-tab="chat" aria-selected="true">Perguntar<small>converse e descubra o que fazer</small></button>
     <button role="tab" data-tab="transporte" aria-selected="false">Transporte<small>comprar numa cidade, vender em outra</small></button>
@@ -273,6 +331,7 @@ table.prices .best{color:var(--gain);font-weight:700}
     <button role="tab" data-tab="refino" aria-selected="false">Refino<small>transformar recurso bruto</small></button>
     <button role="tab" data-tab="craft" aria-selected="false">Crafting<small>fabricar qualquer item</small></button>
   </nav>
+  </div>
 
   <!-- PERGUNTAR -->
   <section class="panel chatpanel" data-panel="chat">
@@ -281,7 +340,7 @@ table.prices .best{color:var(--gain);font-weight:700}
       <div class="sugs" id="chat-sugs" aria-label="Sugestões de perguntas"></div>
       <form class="ask" id="chat-form" autocomplete="off">
         <label for="chat-in" class="sr">Sua pergunta</label>
-        <input id="chat-in" type="text" placeholder="Escreva sua pergunta aqui">
+        <input id="chat-in" type="text" placeholder="Sua pergunta">
         <button class="go" id="chat-send" type="submit">Perguntar</button>
       </form>
       <div class="chat-tools"><button type="button" id="chat-log-btn" hidden>Perguntas que eu não entendi (<span id="chat-log-n">0</span>)</button></div>
@@ -870,7 +929,10 @@ function stamp(){
 async function withBusy(btn, statusEl, fn){
   btn.disabled = true; const old = btn.textContent; btn.textContent = 'Buscando preços…';
   statusEl.textContent = '';
-  try { await fn(); stamp(); }
+  try {
+    await fn(); stamp();
+    if (matchMedia('(max-width: 860px)').matches){ const l = statusEl.closest('.ledger'); if (l) l.scrollIntoView({block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
+  }
   catch (err){
     const msg = err instanceof TypeError
       ? 'Não foi possível buscar os preços. Confira sua internet. Se você abriu o painel pela prévia do Claude, baixe o arquivo e abra no navegador.'
@@ -1568,7 +1630,7 @@ function priceHtml({ids, P}){
     const sells = rows.filter(x => x.r.sell && x.c !== BM), buys = rows.filter(x => x.r.buy);
     const cheap = sells.reduce((a, x) => !a || x.r.sell < a.r.sell ? x : a, null);
     const pays = buys.reduce((a, x) => !a || x.r.buy > a.r.buy ? x : a, null);
-    let h = `<p>Preços de <b>${esc(label(id))}</b> agora:</p><div class="pricetab"><table class="prices"><thead><tr><th>Cidade</th><th class="n">Anunciado por</th><th class="n">Pedidos de compra pagam</th></tr></thead><tbody>`;
+    let h = `<p>Preços de <b>${esc(label(id))}</b> agora:</p><div class="pricetab"><table class="prices"><thead><tr><th>Cidade</th><th class="n">Menor anúncio</th><th class="n">Pedido de compra</th></tr></thead><tbody>`;
     h += rows.map(x => `<tr><td>${city(x.c)}</td>
       <td class="n${cheap && x === cheap ? ' best' : ''}">${x.r.sell && x.c !== BM ? `${fmt(x.r.sell)}<small>${ageText(x.r.sellDate)}</small>` : '<span class="nodata">sem anúncio</span>'}</td>
       <td class="n${pays && x === pays ? ' best' : ''}">${x.r.buy ? `${fmt(x.r.buy)}<small>${ageText(x.r.buyDate)}</small>` : '<span class="nodata">sem pedido</span>'}</td></tr>`).join('');
@@ -1737,6 +1799,7 @@ function applySettings(p){
   else if (p.budget < 0 && chat.budget){ chat.budget = 0; done.push(`contas por quantidade (${fmt(qty())} unidades), sem limite de prata`); }
   if (p.mode && p.mode !== chat.mode){ chat.mode = p.mode; done.push(p.mode === 'order' ? 'anunciando e esperando a venda' : 'vendendo na hora'); }
   if (p.focus != null && p.focus !== chat.focus){ chat.focus = p.focus; done.push(p.focus ? 'refino com foco' : 'refino sem foco'); }
+  if (done.length) ['g-premium', 'g-qty', 'g-cap'].forEach(id => $(id).dispatchEvent(new Event('change')));
   return done;
 }
 function mergeCtx(last, p){
@@ -1951,7 +2014,7 @@ const RUNNERS = {transporte:runTransport, bm:runBM, refino:runRefine, craft:runC
 let current = 'chat';
 function showTab(name){
   current = name;
-  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+  document.querySelectorAll('.tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === name); if (b.dataset.tab === name) b.scrollIntoView({block: 'nearest', inline: 'nearest'}); });
   document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== name);
   store.set('tab', name);
 }
@@ -1996,6 +2059,10 @@ function init(){
   $('g-premium').addEventListener('change', () => store.set('premium', $('g-premium').checked));
   $('g-qty').addEventListener('change', () => store.set('qty', qty()));
   $('g-cap').addEventListener('change', () => store.set('cap', cap()));
+  const prefSum = () => { $('prefs-sum').textContent = `Ajustes: ${$('g-premium').checked ? 'com' : 'sem'} Premium, ${fmt(qty())} unidades, ${fmt(cap())} kg`; };
+  ['g-premium', 'g-qty', 'g-cap'].forEach(id => $(id).addEventListener('change', prefSum));
+  prefSum();
+  if (matchMedia('(max-width: 640px)').matches) $('prefs-wrap').open = false;
   const t = store.get('tab', 'chat'); if (RUNNERS[t] || t === 'chat') showTab(t);
 }
 init();
