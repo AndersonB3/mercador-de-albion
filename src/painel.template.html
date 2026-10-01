@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mercador de Albion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+/* Layout: bancada de perguntas simples à esquerda; à direita, a resposta em uma frase e a lista de
+   oportunidades. Cada cartão diz se dá lucro, se é seguro, quanto vende e abre a conta como recibo.
+   Elemento marcante: o escudo com a cor de cada cidade. */
+:root{
+  --ground:#e3e7e0; --paper:#f3f5f0; --field:#ffffff; --ink:#1d2b2c; --muted:#5b6967; --rule:#c9d0c8;
+  --gain:#2d6a3e; --gain-bg:#dcebdd; --loss:#a3322b; --loss-bg:#f3dedb; --warn:#8a5a12; --warn-bg:#f1e6cf;
+  --c-caerleon:#8e2b2b; --c-bridgewatch:#bf6f22; --c-fortsterling:#7d8c99; --c-lymhurst:#4b7a36;
+  --c-martlock:#2d5d8c; --c-thetford:#6a4787; --c-brecilien:#327a72; --c-blackmarket:#3a3330;
+  --serif:"Alegreya",Georgia,"Times New Roman",serif;
+  --sans:"Alegreya Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#152022; --paper:#1c292b; --field:#223133; --ink:#e2e8e3; --muted:#98a6a3; --rule:#33444a;
+  --gain:#6cc28a; --gain-bg:#1f3a2b; --loss:#ee8177; --loss-bg:#3d2523; --warn:#e3ad5c; --warn-bg:#3a3020;
+  --c-caerleon:#d0574f; --c-bridgewatch:#e59a4a; --c-fortsterling:#b3c1cc; --c-lymhurst:#7fb265;
+  --c-martlock:#5f95cc; --c-thetford:#a582c4; --c-brecilien:#5fb3a9; --c-blackmarket:#b3a79f;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#152022; --paper:#1c292b; --field:#223133; --ink:#e2e8e3; --muted:#98a6a3; --rule:#33444a;
+  --gain:#6cc28a; --gain-bg:#1f3a2b; --loss:#ee8177; --loss-bg:#3d2523; --warn:#e3ad5c; --warn-bg:#3a3020;
+  --c-caerleon:#d0574f; --c-bridgewatch:#e59a4a; --c-fortsterling:#b3c1cc; --c-lymhurst:#7fb265;
+  --c-martlock:#5f95cc; --c-thetford:#a582c4; --c-brecilien:#5fb3a9; --c-blackmarket:#b3a79f;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--ground);color:var(--ink);font:17px/1.5 var(--sans);font-variant-numeric:tabular-nums lining-nums}
+.page{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+
+/* cabeçalho */
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px 28px}
+.brand h1{font:700 2.2rem/1.05 var(--serif);margin:0;text-wrap:balance}
+.brand p{margin:6px 0 0;color:var(--muted);max-width:54ch}
+.prefs{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;color:var(--muted);font-size:.95rem}
+.prefs label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.prefs input[type=checkbox]{accent-color:var(--ink);width:16px;height:16px}
+.prefs input[type=number]{width:84px;padding:4px 8px}
+
+/* abas */
+.tabs{display:flex;gap:26px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
+.tabs button{appearance:none;background:none;border:0;padding:6px 0 10px;margin-bottom:-1px;border-bottom:3px solid transparent;
+  font:500 1.2rem var(--serif);color:var(--muted);cursor:pointer;white-space:nowrap;text-align:left}
+.tabs button small{display:block;font:400 .8rem var(--sans);color:var(--muted)}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* bancada */
+.panel{display:grid;grid-template-columns:minmax(0,310px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.panel{grid-template-columns:minmax(0,1fr)}}
+.bench{display:flex;flex-direction:column;gap:18px;padding:18px;background:var(--paper);border-radius:12px}
+.bench .what{margin:0;font-size:1rem;line-height:1.45}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f>span,.f>legend{font-weight:700;font-size:.98rem;padding:0}
+fieldset.f{border:0;margin:0;padding:0}
+.f small,.help{color:var(--muted);font-size:.86rem;line-height:1.4}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select,input[type=number],input[type=text],input[type=search],textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--field);
+  border:1px solid var(--rule);border-radius:6px;padding:7px 9px;width:100%;max-width:100%}
+textarea{min-height:88px;resize:vertical;font-size:.85rem;line-height:1.45}
+.choices{display:flex;flex-direction:column;gap:6px}
+.choice{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;cursor:pointer;background:var(--field)}
+.choice input{margin:3px 0 0;accent-color:var(--ink)}
+.choice b{font-weight:500;display:block}
+.choice small{color:var(--muted);font-size:.84rem}
+.choice:has(input:checked){border-color:var(--ink)}
+.go{font:700 1.05rem var(--sans);background:var(--ink);color:var(--paper);border:0;border-radius:8px;padding:12px 16px;cursor:pointer}
+.go:hover{opacity:.9}
+.go:disabled{opacity:.55;cursor:progress}
+.more{border-top:1px solid var(--rule);padding-top:12px}
+.more>summary{cursor:pointer;color:var(--muted);font-size:.95rem}
+.more[open]>summary{margin-bottom:12px}
+.more .inner{display:flex;flex-direction:column;gap:14px}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* busca de itens */
+.picker{position:relative;display:flex;flex-direction:column;gap:6px}
+.results{list-style:none;margin:0;padding:4px;background:var(--field);border:1px solid var(--rule);border-radius:8px;max-height:280px;overflow:auto}
+.results:empty{display:none}
+.results button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;width:100%;padding:6px 8px;border-radius:6px;cursor:pointer}
+.results button:hover,.results button:focus-visible{background:var(--paper);outline:none}
+.results button small{color:var(--muted);font-size:.8rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips:empty{display:none}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:999px;padding:3px 4px 3px 10px;font-size:.88rem;background:var(--field)}
+.chip button{all:unset;cursor:pointer;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.chip button:hover,.chip button:focus-visible{background:var(--paper);color:var(--ink)}
+.picked{font-weight:500}
+
+/* escudo de cidade */
+.shield{display:inline-block;width:.62em;height:.78em;background:var(--c,var(--muted));
+  clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%);flex:none}
+.city{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-weight:500}
+.towns{display:flex;flex-wrap:wrap;gap:6px}
+.town{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border:1px solid var(--rule);border-radius:999px;
+  font-size:.9rem;cursor:pointer;user-select:none;color:var(--muted);position:relative}
+.town input{position:absolute;opacity:0;pointer-events:none}
+.town .shield{opacity:.35}
+.town:has(input:checked){color:var(--ink);border-color:var(--c)}
+.town:has(input:checked) .shield{opacity:1}
+.town:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+
+/* resultado */
+.ledger{display:flex;flex-direction:column;gap:16px;min-width:0}
+.verdict{margin:0;font:500 1.5rem/1.3 var(--serif);text-wrap:balance;max-width:42ch}
+.verdict .muted{color:var(--muted)}
+.verdict .g{color:var(--gain)}
+.status{color:var(--muted);font-size:.92rem;margin:0}
+.status:empty{display:none}
+.status .err{color:var(--loss)}
+.group-title{font:500 1.15rem var(--serif);margin:6px 0 0}
+.list{display:flex;flex-direction:column;gap:10px}
+.deal{background:var(--paper);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:9px;border-left:5px solid var(--rule)}
+.deal.gain{border-left-color:var(--gain)}
+.deal.gain.caution{border-left-color:var(--warn)}
+.deal.loss{border-left-color:var(--loss)}
+.deal-main{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 20px;align-items:flex-start}
+.deal-what{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:.8rem;font-weight:700;border-radius:4px;padding:1px 7px}
+.tag.gain{background:var(--gain-bg);color:var(--gain)}
+.tag.loss{background:var(--loss-bg);color:var(--loss)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.deal-what b{font:700 1.15rem var(--serif)}
+.deal-what .how{color:var(--muted)}
+.deal-what .how .city{margin-inline:2px}
+.deal-result{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.deal-result strong{font:700 1.6rem/1.1 var(--serif)}
+.deal.gain .deal-result strong{color:var(--gain)}
+.deal.loss .deal-result strong{color:var(--loss)}
+.deal-result span{color:var(--muted);font-size:.88rem}
+.deal-result em{font-style:normal;font-size:.92rem;margin-top:2px}
+.facts{display:flex;flex-direction:column;gap:3px;font-size:.92rem;margin:0;padding:0;list-style:none}
+.facts li{display:flex;gap:8px;align-items:baseline}
+.facts li::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;transform:translateY(-1px)}
+.facts .ok{color:var(--gain)}
+.facts .warn{color:var(--warn)}
+.facts .old{color:var(--loss)}
+.facts .info{color:var(--muted)}
+.sum4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.sum4 div{background:var(--field);border-radius:8px;padding:8px 10px;min-width:0}
+.sum4 dt{font-size:.8rem;color:var(--muted)}
+.sum4 dd{margin:0;font:700 1.05rem var(--serif)}
+.sum4 dd.g{color:var(--gain)} .sum4 dd.l{color:var(--loss)}
+@media (max-width:620px){.sum4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.steps{margin:10px 0 0;padding-left:1.4em;display:flex;flex-direction:column;gap:7px;max-width:62ch}
+.steps li{padding-left:4px}
+.steps li::marker{font-weight:700;color:var(--ink)}
+.steps b{font-weight:700}
+.facts .do{display:block;color:var(--muted)}
+.deal details>summary{cursor:pointer;font-weight:500;font-size:.95rem;width:max-content}
+.receipt{margin-top:10px;border-top:1px dashed var(--rule);padding-top:10px;display:flex;flex-direction:column;gap:4px;max-width:540px}
+.receipt .ln{display:flex;justify-content:space-between;gap:16px;font-size:.95rem}
+.receipt .ln span:first-child{color:var(--muted);min-width:0}
+.receipt .ln.sum{border-top:1px solid var(--rule);padding-top:4px;margin-top:2px}
+.receipt .ln.sum span{color:var(--ink);font-weight:700}
+.receipt .ln.total span{font-weight:700;font-size:1.02rem;color:var(--ink)}
+.receipt .note{font-size:.84rem;color:var(--muted);margin:4px 0 0}
+.spark{margin-top:12px;max-width:540px}
+.spark p{margin:0 0 4px;font-size:.86rem;color:var(--muted)}
+.spark svg{display:block;width:100%;height:auto}
+.fold{background:var(--paper);border-radius:12px;padding:12px 16px}
+.fold>summary{cursor:pointer;font:500 1.05rem var(--serif)}
+.fold[open]>summary{margin-bottom:10px}
+.fold .list .deal{background:var(--field)}
+.fold p{color:var(--muted);font-size:.92rem;margin:0 0 8px}
+.refresh{display:flex;flex-direction:column;gap:10px}
+.refresh div{display:flex;flex-direction:column;gap:2px}
+.refresh span.items{font-size:.92rem}
+.showmore{align-self:flex-start;font:inherit;background:none;border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
+.empty{padding:28px 20px;color:var(--muted);text-align:center;background:var(--paper);border-radius:12px;margin:0}
+
+/* chat */
+.panel.chatpanel{display:block}
+.chat{max-width:840px;display:flex;flex-direction:column;gap:14px}
+.log{display:flex;flex-direction:column;gap:14px}
+.msg{border-radius:14px;padding:12px 16px;line-height:1.5;min-width:0}
+.msg p{margin:0 0 8px}
+.msg>:last-child{margin-bottom:0}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:4px;max-width:85%;overflow-wrap:anywhere}
+.msg.bot{align-self:stretch;background:var(--paper);border-bottom-left-radius:4px}
+.msg .who{display:block;font:700 .95rem var(--serif);margin-bottom:4px}
+.msg.typing .wait{color:var(--muted);font-style:italic}
+.msg .help{color:var(--muted);font-size:.92rem}
+.msg .err{color:var(--loss)}
+.msg .g{color:var(--gain)}
+.msg ul.plain{margin:0 0 8px;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.msg .steps{margin:4px 0 8px}
+.msg details.inmsg>summary{cursor:pointer;font-weight:500}
+.opps{list-style:none;margin:6px 0 10px;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:opp}
+.opp{background:var(--field);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;border-left:4px solid var(--gain);min-width:0}
+.opp.caution{border-left-color:var(--warn)}
+.opp p{margin:0}
+.opp-title{font:700 1.1rem var(--serif)}
+.opp-title::before{counter-increment:opp;content:counter(opp) ". "}
+.opp .how{color:var(--muted)}
+.opp-note{font-size:.92rem}
+.opp-note.warn{color:var(--warn)}
+.opp-note.old{color:var(--loss)}
+.opp details>summary{cursor:pointer;font-weight:500;font-size:.95rem;width:max-content;max-width:100%}
+.opp details .deal{margin-top:8px;background:var(--paper)}
+.opp details .deal .sum4 div{background:var(--field)}
+.tag.cat{background:var(--paper);color:var(--ink);border:1px solid var(--rule)}
+.understood{color:var(--muted);font-size:.92rem;border-left:3px solid var(--rule);padding-left:10px}
+.understood b{color:var(--ink);font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.opts button,.fb button{font:inherit;font-size:.92rem;background:var(--field);border:1px solid var(--rule);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.opts button:hover,.fb button:hover{border-color:var(--ink)}
+.fb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule);color:var(--muted);font-size:.92rem}
+.fb .opts{margin-top:0;flex-basis:100%}
+.logbox{background:var(--field);border-radius:8px;padding:10px;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;margin:0 0 8px}
+.chat-tools{display:flex;justify-content:flex-end}
+.chat-tools button{font:inherit;font-size:.86rem;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:2px 0}
+.sugs:empty{display:none}
+.sugs{display:flex;flex-wrap:wrap;gap:6px}
+.sugs button{font:inherit;font-size:.92rem;background:var(--paper);border:1px solid var(--rule);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.sugs button:hover{border-color:var(--ink)}
+.ask{position:sticky;bottom:0;display:flex;gap:8px;padding-block:10px calc(10px + env(safe-area-inset-bottom, 0px));background:var(--ground)}
+.ask input{flex:1;min-width:0;font-size:1rem;padding:11px 12px;border-radius:8px}
+.ask .go{padding:11px 18px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pricetab{overflow-x:auto;margin:0 0 8px}
+table.prices{border-collapse:collapse;width:100%;font-size:.93rem}
+table.prices th,table.prices td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap;vertical-align:top}
+table.prices th{font-weight:500;color:var(--muted)}
+table.prices .n{text-align:right}
+table.prices small{display:block;color:var(--muted);font-size:.78rem}
+table.prices .best{color:var(--gain);font-weight:700}
+.nodata{color:var(--muted);font-style:italic}
+
+.notes{background:var(--paper);border-radius:12px;padding:14px 18px}
+.notes summary{cursor:pointer;font:500 1.1rem var(--serif)}
+.notes dl{margin:12px 0 2px;display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:8px 18px;max-width:900px}
+.notes dt{font-weight:700}
+.notes dd{margin:0;color:var(--muted)}
+.notes ol{margin:4px 0 0;padding-left:1.2em}
+@media (max-width:560px){.notes dl{grid-template-columns:1fr}.notes dd{margin-bottom:8px}}
+@media (max-width:520px){.brand h1{font-size:1.8rem}.verdict{font-size:1.25rem}.row2{grid-template-columns:1fr}.deal-result{text-align:left;align-items:flex-start}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="brand">
+      <h1>Mercador de Albion</h1>
+      <p>Descubra o que dá lucro no mercado do servidor das Américas, com preços enviados pelos próprios jogadores.</p>
+    </div>
+    <div class="prefs">
+      <label for="g-premium"><input type="checkbox" id="g-premium" checked> Tenho Premium</label>
+      <label for="g-qty">Contas para <input type="number" id="g-qty" value="100" min="1" step="10"> unidades</label>
+      <label for="g-cap">Minha montaria carrega <input type="number" id="g-cap" value="1000" min="0" step="100"> kg</label>
+      <label for="g-auto"><input type="checkbox" id="g-auto"> Atualizar sozinho a cada 5 min</label>
+      <span id="g-last">Nenhuma busca ainda</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="O que você quer fazer">
+    <button role="tab" data-tab="chat" aria-selected="true">Perguntar<small>converse e descubra o que fazer</small></button>
+    <button role="tab" data-tab="transporte" aria-selected="false">Transporte<small>comprar numa cidade, vender em outra</small></button>
+    <button role="tab" data-tab="bm" aria-selected="false">Black Market<small>vender equipamento em Caerleon</small></button>
+    <button role="tab" data-tab="refino" aria-selected="false">Refino<small>transformar recurso bruto</small></button>
+    <button role="tab" data-tab="craft" aria-selected="false">Crafting<small>fabricar qualquer item</small></button>
+  </nav>
+
+  <!-- PERGUNTAR -->
+  <section class="panel chatpanel" data-panel="chat">
+    <div class="chat">
+      <div class="log" id="chat-log" aria-live="polite"></div>
+      <div class="sugs" id="chat-sugs" aria-label="Sugestões de perguntas"></div>
+      <form class="ask" id="chat-form" autocomplete="off">
+        <label for="chat-in" class="sr">Sua pergunta</label>
+        <input id="chat-in" type="text" placeholder="Escreva sua pergunta aqui">
+        <button class="go" id="chat-send" type="submit">Perguntar</button>
+      </form>
+      <div class="chat-tools"><button type="button" id="chat-log-btn" hidden>Perguntas que eu não entendi (<span id="chat-log-n">0</span>)</button></div>
+    </div>
+  </section>
+
+  <!-- TRANSPORTE -->
+  <section class="panel" data-panel="transporte" hidden>
+    <div class="bench">
+      <p class="what">Você compra um item onde ele está barato, leva até outra cidade e vende mais caro. O painel mostra a melhor viagem para cada item.</p>
+      <fieldset class="f"><legend>O que você quer transportar?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="t-kind" value="refinados" checked><span><b>Recursos refinados</b><small>Tábuas, barras, couro, tecido, blocos</small></span></label>
+          <label class="choice"><input type="radio" name="t-kind" value="brutos"><span><b>Recursos brutos</b><small>Madeira, minério, couro cru, fibra, pedra</small></span></label>
+          <label class="choice"><input type="radio" name="t-kind" value="equip"><span><b>Equipamentos comuns</b><small>Armas, armaduras, bolsas e capas mais negociados</small></span></label>
+          <label class="choice"><input type="radio" name="t-kind" value="mine"><span><b>Escolher os itens</b><small>Busque qualquer item pelo nome</small></span></label>
+        </div></fieldset>
+      <div class="picker" id="t-picker" hidden></div>
+      <fieldset class="f"><legend>Em quais cidades você pode comprar?</legend><div class="towns" id="t-orig"></div></fieldset>
+      <fieldset class="f"><legend>Em quais cidades você pode vender?</legend><div class="towns" id="t-dest"></div></fieldset>
+      <fieldset class="f"><legend>Como você vai vender?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="t-mode" value="order" checked><span><b>Anunciar e esperar</b><small>Ganha mais, mas precisa esperar alguém comprar</small></span></label>
+          <label class="choice"><input type="radio" name="t-mode" value="instant"><span><b>Vender na hora</b><small>Recebe na hora, mas por um preço menor</small></span></label>
+        </div></fieldset>
+      <button class="go" id="t-run" type="button">Mostrar o que dá lucro</button>
+      <details class="more"><summary>Opções avançadas</summary>
+        <div class="inner">
+          <label class="f" for="t-q"><span>Qualidade do item</span><select id="t-q"></select></label>
+          <label class="f" for="t-min"><span>Só mostrar como lucro acima de (%)</span><input type="number" id="t-min" value="3" step="1">
+            <small>Lucros muito pequenos somem com uma pequena mudança de preço.</small></label>
+        </div></details>
+    </div>
+    <div class="ledger">
+      <p class="verdict" id="t-verdict"><span class="muted">Escolha o que quer transportar e clique em Mostrar o que dá lucro.</span></p>
+      <p class="status" id="t-status"></p>
+      <div id="t-out"></div>
+    </div>
+  </section>
+
+  <!-- BLACK MARKET -->
+  <section class="panel" data-panel="bm" hidden>
+    <div class="bench">
+      <p class="what">O Black Market, em Caerleon, compra equipamentos de jogadores. Às vezes ele paga mais do que o preço nas outras cidades. O painel encontra esses casos.</p>
+      <fieldset class="f"><legend>Quais itens você quer checar?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="b-kind" value="equip" checked><span><b>Equipamentos comuns</b><small>Armas e armaduras mais negociadas</small></span></label>
+          <label class="choice"><input type="radio" name="b-kind" value="mine"><span><b>Escolher os itens</b><small>Busque qualquer item pelo nome</small></span></label>
+        </div></fieldset>
+      <div class="picker" id="b-picker" hidden></div>
+      <fieldset class="f"><legend>Em quais cidades você pode comprar?</legend><div class="towns" id="b-orig"></div></fieldset>
+      <button class="go" id="b-run" type="button">Mostrar o que dá lucro</button>
+      <details class="more"><summary>Opções avançadas</summary>
+        <div class="inner">
+          <label class="f" for="b-q"><span>Qualidade do item</span><select id="b-q"></select></label>
+          <label class="f" for="b-min"><span>Só mostrar como lucro acima de (%)</span><input type="number" id="b-min" value="3" step="1"></label>
+        </div></details>
+    </div>
+    <div class="ledger">
+      <p class="verdict" id="b-verdict"><span class="muted">Clique em Mostrar o que dá lucro para ver o que o Black Market está pagando bem.</span></p>
+      <p class="status" id="b-status"></p>
+      <div id="b-out"></div>
+    </div>
+  </section>
+
+  <!-- REFINO -->
+  <section class="panel" data-panel="refino" hidden>
+    <div class="bench">
+      <p class="what">Refinar é transformar recurso bruto em refinado, como madeira em tábuas. O painel usa a receita oficial do jogo e diz se vale a pena em cada tier.</p>
+      <label class="f" for="r-res"><span>O que você quer refinar?</span>
+        <select id="r-res">
+          <option value="WOOD">Madeira em tábuas</option>
+          <option value="ORE">Minério em barras de metal</option>
+          <option value="HIDE">Couro cru em couro trabalhado</option>
+          <option value="FIBER">Fibra em tecido</option>
+          <option value="ROCK">Pedra em blocos de pedra</option>
+        </select></label>
+      <label class="f" for="r-ench"><span>Encantamento</span><select id="r-ench"></select></label>
+      <div class="row2">
+        <label class="f" for="r-buy"><span>Comprar em</span><select id="r-buy"></select></label>
+        <label class="f" for="r-sell"><span>Vender em</span><select id="r-sell"></select></label>
+      </div>
+      <fieldset class="f"><legend>Onde você vai refinar?</legend>
+        <div class="choices" id="r-where"></div>
+        <small id="r-hint"></small></fieldset>
+      <fieldset class="f"><legend>Como você vai vender?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="r-mode" value="order" checked><span><b>Anunciar e esperar</b></span></label>
+          <label class="choice"><input type="radio" name="r-mode" value="instant"><span><b>Vender na hora</b></span></label>
+        </div></fieldset>
+      <button class="go" id="r-run" type="button">Mostrar o que dá lucro</button>
+      <details class="more"><summary>Opções avançadas</summary>
+        <div class="inner">
+          <label class="f" for="r-rrr"><span>Quanto do material volta (%)</span><input type="number" id="r-rrr" value="36.7" step="0.1">
+            <small>Ao refinar, o jogo devolve parte do material. Escolher o local acima preenche este número.</small></label>
+          <label class="f" for="r-fee"><span>Taxa da estação, em prata por item</span><input type="number" id="r-fee" value="0" step="10">
+            <small>Aparece na estação de refino antes de você confirmar. Deixe 0 se não souber.</small></label>
+        </div></details>
+    </div>
+    <div class="ledger">
+      <p class="verdict" id="r-verdict"><span class="muted">Escolha o recurso e clique em Mostrar o que dá lucro.</span></p>
+      <p class="status" id="r-status"></p>
+      <div id="r-out"></div>
+    </div>
+  </section>
+
+  <!-- CRAFTING -->
+  <section class="panel" data-panel="craft" hidden>
+    <div class="bench">
+      <p class="what">Você compra os materiais, fabrica o item e vende. O painel usa a receita oficial do jogo e compara o custo com o preço do item pronto, em cada tier.</p>
+      <div class="picker" id="c-picker"></div>
+      <label class="f" for="c-ench"><span>Encantamento</span><select id="c-ench"></select></label>
+      <div class="row2">
+        <label class="f" for="c-buy"><span>Comprar materiais em</span><select id="c-buy"></select></label>
+        <label class="f" for="c-sell"><span>Vender em</span><select id="c-sell"></select></label>
+      </div>
+      <fieldset class="f"><legend>Como você vai vender?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="c-mode" value="order" checked><span><b>Anunciar e esperar</b></span></label>
+          <label class="choice"><input type="radio" name="c-mode" value="instant"><span><b>Vender na hora</b></span></label>
+        </div></fieldset>
+      <button class="go" id="c-run" type="button">Mostrar o que dá lucro</button>
+      <details class="more"><summary>Opções avançadas</summary>
+        <div class="inner">
+          <label class="f" for="c-q"><span>Qualidade de venda</span><select id="c-q"></select></label>
+          <label class="f" for="c-rrr"><span>Quanto do material volta (%)</span><input type="number" id="c-rrr" value="15.2" step="0.1">
+            <small>15,2% é o normal, sem bônus de cidade nem foco. Artefatos nunca voltam.</small></label>
+          <label class="f" for="c-fee"><span>Taxa da estação, em prata por item</span><input type="number" id="c-fee" value="0" step="10"></label>
+        </div></details>
+    </div>
+    <div class="ledger">
+      <p class="verdict" id="c-verdict"><span class="muted">Escolha o que quer fabricar e clique em Mostrar o que dá lucro.</span></p>
+      <p class="status" id="c-status"></p>
+      <div id="c-out"></div>
+    </div>
+  </section>
+
+  <details class="notes" id="faq">
+    <summary>Dúvidas comuns</summary>
+    <dl>
+      <dt>De onde vêm os preços?</dt>
+      <dd>De jogadores que usam o Albion Data Client. Quando alguém abre um item no mercado, o preço é enviado para uma base pública. O painel lê essa base.</dd>
+      <dt>Como ajudar a deixar os preços frescos?</dt>
+      <dd><ol>
+        <li>Baixe o Albion Data Client em albion-online-data.com e instale.</li>
+        <li>Deixe o programa aberto. Ele fica perto do relógio do Windows.</li>
+        <li>Entre no jogo e abra no mercado os itens que você quer negociar.</li>
+        <li>Clique de novo em Mostrar o que dá lucro. Os itens que você abriu aparecem como Preços recentes.</li>
+      </ol>Programas de ping, como ExitLag, podem impedir o envio. Se o programa mostrar "Server: Unknown", feche o programa de ping.</dd>
+      <dt>Como usar a aba Perguntar?</dt>
+      <dd>Escreva do seu jeito o que quer saber, como "o que está dando lucro hoje?", "vale a pena refinar couro T6?" ou "quanto está a tábua T5?". Você também pode ajustar as contas conversando: "não tenho premium", "quero vender na hora", "tenho 2 milhões" ou "com foco". Depois de uma resposta, pergunte "passo a passo da 1ª", "mostrar mais" ou "e em Martlock?". Toda resposta começa com "Entendi assim", mostrando como o chat leu a pergunta. Se ele entender errado, toque em "Não" embaixo da resposta e escolha o que você queria. As perguntas que ele não entende ficam guardadas só no seu navegador, no link "Perguntas que eu não entendi", para você copiar e mandar a quem cuida do painel. As outras abas continuam disponíveis para quem prefere escolher cada opção.</dd>
+      <dt>Como ler cada oportunidade?</dt>
+      <dd>No topo do cartão estão o selo (dá lucro ou não), o item e a rota. O número grande é o lucro de cada unidade. Logo abaixo, o resumo mostra quanto você gasta, recebe e lucra com a quantidade escolhida no topo da página. Os pontos coloridos são os avisos, cada um com o que fazer. "Como fazer, passo a passo" diz o que fazer no jogo, com o preço-limite para não ter prejuízo. "Ver a conta" mostra cada taxa descontada.</dd>
+      <dt>O que quer dizer "Seguro" e "Atenção"?</dt>
+      <dd>O painel confere o histórico de vendas da última semana. "Seguro" quer dizer que o item vende bem, o preço está normal e não é antigo. "Atenção" traz o motivo escrito no cartão, como vender pouco ou um preço fora do comum.</dd>
+      <dt>Por que o lucro é menor do que a diferença de preço?</dt>
+      <dd>O mercado cobra taxa quando você vende: 4% com Premium e 8% sem. Se você anunciar e esperar, paga mais 2,5% para criar o anúncio. O painel já desconta tudo. Clique em Ver a conta para ver cada parte.</dd>
+      <dt>Anunciar ou vender na hora?</dt>
+      <dd>Anunciando, você escolhe o preço e ganha mais, mas precisa esperar. Vendendo na hora, você vende para quem já deixou um pedido de compra: recebe na hora, só que por menos.</dd>
+      <dt>O que o painel não sabe?</dt>
+      <dd>Quantas unidades estão à venda por aquele preço, se você pode ser atacado no caminho e quanto tempo o anúncio leva para vender. Isso fica por sua conta.</dd>
+    </dl>
+  </details>
+</div>
+
+<script type="application/json" id="db">/*__DB__*/</script>
+<script>
+const API = 'https://west.albion-online-data.com/api/v2/stats/prices/';
+const HIST = 'https://west.albion-online-data.com/api/v2/stats/history/';
+const CITIES = ['Caerleon','Bridgewatch','Fort Sterling','Lymhurst','Martlock','Thetford','Brecilien'];
+const BM = 'Black Market';
+const TIERS = [4,5,6,7,8];
+const RES_BASES = ['WOOD','ORE','HIDE','FIBER','ROCK'];
+const REF_OF = {WOOD:'PLANKS',ORE:'METALBAR',HIDE:'LEATHER',FIBER:'CLOTH',ROCK:'STONEBLOCK'};
+const REFINE_BONUS = {WOOD:'Fort Sterling',ORE:'Thetford',HIDE:'Martlock',FIBER:'Lymhurst',ROCK:'Bridgewatch'};
+const COMMON_EQUIP = ['MAIN_SWORD','2H_CLAYMORE','MAIN_DAGGER','2H_BOW','MAIN_FIRESTAFF','MAIN_NATURESTAFF','2H_HOLYSTAFF',
+  'ARMOR_PLATE_SET1','ARMOR_LEATHER_SET1','ARMOR_CLOTH_SET1','HEAD_PLATE_SET1','SHOES_CLOTH_SET1','BAG','CAPE'];
+const CRAFT_CATS = ['weapons','head','armors','shoes','capes','offhands','bags','consumables','mounts','gathering','farming'];
+const QUALITIES = [['1','Normal'],['2','Boa'],['3','Excepcional'],['4','Excelente'],['5','Obra-prima']];
+const WHERE = [
+  ['15.2','Numa cidade qualquer','Volta 15,2% do material'],
+  ['36.7','Na cidade com bônus','Volta 36,7% do material'],
+  ['53.9','Na cidade com bônus, usando foco','Volta 53,9% do material']
+];
+const HIST_LIMIT = 30;
+
+/* ---------- base de itens ---------- */
+const DB = JSON.parse(document.getElementById('db').textContent);
+function split(id){ const m = id.match(/^(.*?)@(\d)$/); return m ? {b:m[1], e:+m[2]} : {b:id, e:0}; }
+function info(id){ return DB[id] || DB[split(id).b] || null; }
+function tierOf(id){ const m = id.match(/^T(\d)/); return m ? +m[1] : 0; }
+function label(id){
+  const i = info(id), t = tierOf(id), e = split(id).e;
+  const nm = i ? i[0] : id.replace(/_/g,' ');
+  return t ? `${nm} (T${t}.${e})` : nm;
+}
+const weightOf = id => (info(id) || [])[1] || 0;
+function recipeOf(id){
+  if (DB[id]) return DB[id][4]['0'] || null;
+  const {b, e} = split(id);
+  return (DB[b] && DB[b][4][String(e)]) || null;
+}
+function variants(id){
+  if (DB[id] && id.includes('@')) return [id];
+  const out = [id], recs = DB[id] ? DB[id][4] : {};
+  for (const e of [1,2,3]){
+    const res = `${id}_LEVEL${e}@${e}`;
+    if (DB[res]) out.push(res);
+    else if (recs[String(e)]) out.push(`${id}@${e}`);
+  }
+  return out;
+}
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const INDEX = Object.entries(DB).map(([id, v]) => ({id, n: norm(v[0]), c: v[2], t: tierOf(id)}));
+function searchItems(q, filter){
+  const words = norm(q).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  return INDEX.filter(x => (!filter || filter(x)) && words.every(w => x.n.includes(w) || x.id.toLowerCase().includes(w) || ('t' + x.t) === w))
+    .sort((a,b) => a.t - b.t || a.n.length - b.n.length).slice(0, 14);
+}
+
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('pt-BR');
+const signed = n => (n >= 0 ? '+' : '−') + fmt(Math.abs(n));
+const pct = n => (n*100).toLocaleString('pt-BR',{maximumFractionDigits:1}) + '%';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cityKey = c => String(c).toLowerCase().replace(/[^a-z]/g,'');
+let QTY_OVERRIDE = 0;
+const qty = () => QTY_OVERRIDE || Math.max(1, Math.round(+$('g-qty').value || 1));
+const cap = () => Math.max(0, +$('g-cap').value || 0);
+const radio = name => document.querySelector(`input[name="${name}"]:checked`).value;
+const city = c => `<span class="city" style="--c:var(--c-${cityKey(c)})"><i class="shield" aria-hidden="true"></i>${esc(c)}</span>`;
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('ma-' + k); return v === null ? d : JSON.parse(v); } catch (_) { return d; } },
+  set(k, v){ try { localStorage.setItem('ma-' + k, JSON.stringify(v)); } catch (_) {} }
+};
+
+function parseDate(s){
+  if (!s || s.startsWith('0001')) return null;
+  const d = new Date(/Z$/.test(s) ? s : s + 'Z');
+  return isNaN(d) ? null : d;
+}
+const ageMin = d => d ? (Date.now() - d.getTime()) / 60000 : Infinity;
+function ageText(d){
+  const min = ageMin(d);
+  if (!isFinite(min)) return 'sem data';
+  return min < 1 ? 'agora' : min < 60 ? `há ${Math.round(min)} min` : min < 1440 ? `há ${Math.round(min/60)} h` : `há ${Math.round(min/1440)} dias`;
+}
+function trustFact(prices){
+  const oldest = prices.reduce((a, p) => ageMin(p.d) > ageMin(a) ? p.d : a, prices[0] ? prices[0].d : null);
+  const min = prices.length ? Math.max(...prices.map(p => ageMin(p.d))) : Infinity;
+  const where = lim => [...new Set(prices.filter(p => ageMin(p.d) > lim && p.city).map(p => p.city))].join(' e ');
+  if (min <= 60) return ['ok', `Preços recentes, vistos ${ageText(oldest)}.`];
+  if (min <= 360) return ['warn', `Preços de algumas horas atrás (${ageText(oldest)}).`, `Antes de comprar, abra o item no mercado de ${where(60)} para conferir se o preço continua igual.`];
+  return ['old', `Preços antigos (${ageText(oldest)}). Provavelmente já mudaram.`, `Abra o item no mercado de ${where(360)} com o Albion Data Client ligado e clique de novo em Mostrar o que dá lucro.`];
+}
+
+function taxRate(){ return $('g-premium').checked ? 0.04 : 0.08; }
+function fees(price, mode){
+  const tax = price * taxRate(), setup = mode === 'order' ? price * 0.025 : 0;
+  return {tax, setup, net: price - tax - setup};
+}
+function sellField(rec, mode){ if (!rec) return null; return mode === 'order' ? (rec.sell ? {p:rec.sell,d:rec.sellDate} : null) : (rec.buy ? {p:rec.buy,d:rec.buyDate} : null); }
+function saleLines(price, mode, where){
+  const f = fees(price, mode);
+  const at = where ? (where.startsWith('no ') ? ' ' + where : ' em ' + where) : '';
+  const L = [[`${mode === 'order' ? 'Você anuncia' : 'Você vende na hora'}${at} por`, fmt(price)],
+             [`Taxa de venda do mercado (${$('g-premium').checked ? '4%, com Premium' : '8%, sem Premium'})`, '−' + fmt(f.tax)]];
+  if (f.setup) L.push(['Taxa para criar o anúncio (2,5%)', '−' + fmt(f.setup)]);
+  L.push(['Você recebe', fmt(f.net), 'sum']);
+  return {L, net: f.net};
+}
+
+/* ---------- API: preços atuais ---------- */
+async function fetchPrices(ids, locs, quality){
+  const uniq = [...new Set(ids.filter(Boolean))];
+  const rows = [];
+  const locParam = locs.map(encodeURIComponent).join(',');
+  for (let i = 0; i < uniq.length; i += 50){
+    let url = API + uniq.slice(i, i + 50).join(',') + '.json?locations=' + locParam;
+    if (quality) url += '&qualities=' + quality;
+    const r = await fetch(url);
+    if (r.status === 429) throw new Error('Muitas buscas seguidas. Espere 1 minuto e clique de novo.');
+    if (!r.ok) throw new Error('O site de preços respondeu com erro ' + r.status + '. Tente de novo em instantes.');
+    rows.push(...await r.json());
+  }
+  const m = new Map();
+  for (const r of rows){
+    const k = r.item_id + '|' + cityKey(r.city);
+    let e = m.get(k);
+    if (!e){ e = {sell:0, sellDate:null, buy:0, buyDate:null}; m.set(k, e); }
+    if (r.sell_price_min > 0 && (!e.sell || r.sell_price_min < e.sell)){ e.sell = r.sell_price_min; e.sellDate = parseDate(r.sell_price_min_date); }
+    if (r.buy_price_max > e.buy){ e.buy = r.buy_price_max; e.buyDate = parseDate(r.buy_price_max_date); }
+  }
+  return { get: (id, c) => m.get(id + '|' + cityKey(c)) };
+}
+
+/* ---------- API: histórico de vendas ---------- */
+async function fetchHistory(pairs, quality){
+  const byCity = {};
+  for (const {id, city: c} of pairs) (byCity[c] = byCity[c] || new Set()).add(id);
+  const acc = new Map();
+  for (const [c, set] of Object.entries(byCity)){
+    const ids = [...set];
+    for (let i = 0; i < ids.length; i += 40){
+      let url = HIST + ids.slice(i, i + 40).join(',') + '.json?time-scale=24&locations=' + encodeURIComponent(c);
+      if (quality) url += '&qualities=' + quality;
+      let rows;
+      try { const r = await fetch(url); if (!r.ok) continue; rows = await r.json(); } catch (_) { continue; }
+      for (const row of rows){
+        const k = row.item_id + '|' + cityKey(row.location);
+        const days = acc.get(k) || new Map(); acc.set(k, days);
+        for (const d of row.data || []){
+          const day = d.timestamp.slice(0, 10);
+          const cur = days.get(day) || {n:0, v:0};
+          cur.n += d.item_count; cur.v += d.avg_price * d.item_count;
+          days.set(day, cur);
+        }
+      }
+    }
+  }
+  const out = new Map();
+  const now = Date.now();
+  for (const [k, days] of acc){
+    const list = [...days].map(([day, x]) => ({t: new Date(day + 'T00:00:00Z').getTime(), n: x.n, p: x.n ? x.v / x.n : 0}))
+      .filter(x => x.n > 0).sort((a,b) => a.t - b.t);
+    const week = list.filter(x => now - x.t <= 8 * 864e5);
+    const n7 = week.reduce((s,x) => s + x.n, 0);
+    out.set(k, {
+      daily: n7 / 7,
+      avg: n7 ? week.reduce((s,x) => s + x.p * x.n, 0) / n7 : 0,
+      series: list.filter(x => now - x.t <= 15 * 864e5),
+      stale: !week.length
+    });
+  }
+  return { get: (id, c) => out.get(id + '|' + cityKey(c)) };
+}
+
+/* avalia a oportunidade com o histórico e escreve os avisos */
+function assess(d, H){
+  d.facts = d.facts || [];
+  const hs = H && d.sellId ? H.get(d.sellId, d.sellCity) : null;
+  const hb = H && d.buyId ? H.get(d.buyId, d.buyCity) : null;
+  d.hist = hs;
+  let warns = 0;
+  const where = d.sellCity === BM ? 'no Black Market' : `em ${d.sellCity}`;
+  if (!hs || hs.stale || !hs.daily){
+    d.facts.push(['warn', `Sem vendas registradas ${where} na última semana. Não dá para saber se o item vende.`, 'Comece com poucas unidades para testar.']); warns++;
+  } else {
+    const perDay = hs.daily < 1 ? 'menos de 1' : fmt(hs.daily);
+    if (hs.daily < 3){ d.facts.push(['warn', `Vende muito pouco ${where}: ${perDay} por dia. Pode encalhar.`, 'Faça só algumas unidades, ou prefira itens que vendem mais.']); warns++; }
+    else {
+      d.facts.push(['ok', `Vende cerca de ${perDay} por dia ${where}.`]);
+      if (qty() > hs.daily * 3){ d.facts.push(['warn', `Suas ${fmt(qty())} unidades são mais do que a cidade vende em 3 dias.`, `Para vender rápido, fique em torno de ${fmt(hs.daily * 3)} unidades.`, 'qty']); warns++; }
+    }
+    if (hs.avg && d.sellPrice > hs.avg * 1.25){
+      d.facts.push(['warn', `O preço de venda está ${pct(d.sellPrice / hs.avg - 1)} acima da média da semana (${fmt(hs.avg)}). Esse lucro pode não se repetir.`, 'Veja em Ver a conta quanto sobra se o preço voltar à média.']); warns++;
+    }
+    if (hs.avg){
+      d.avgProfit = fees(hs.avg, d.mode).net - d.cost;
+    }
+  }
+  if (hb && hb.avg && !hb.stale && d.buyPrice && d.buyPrice < hb.avg * 0.65){
+    d.facts.push(['warn', `O preço de compra está bem abaixo da média da semana (${fmt(hb.avg)}). Pode ser só uma unidade barata anunciada.`, 'No jogo, confira quantas unidades existem por esse preço antes de planejar a viagem.']); warns++;
+  }
+  d.checked = true;
+  d.safe = warns === 0 && trustFact(d.prices)[0] !== 'old';
+}
+
+/* ---------- cartões ---------- */
+function sparkline(series, now){
+  if (!series || series.length < 2) return '';
+  const W = 520, Hh = 84, pad = 6, top = 14, bottom = 16;
+  const ps = series.map(s => s.p).concat(now ? [now] : []), min = Math.min(...ps), max = Math.max(...ps);
+  const t0 = series[0].t, t1 = series[series.length - 1].t;
+  const x = t => pad + (t1 === t0 ? 0 : (t - t0) / (t1 - t0)) * (W - pad * 2);
+  const y = p => top + (max === min ? 0.5 : 1 - (p - min) / (max - min)) * (Hh - top - bottom);
+  const pts = series.map(s => `${x(s.t).toFixed(1)},${y(s.p).toFixed(1)}`).join(' ');
+  const last = series[series.length - 1];
+  let nowLine = '';
+  if (now){
+    const yy = y(now);
+    nowLine = `<line x1="${pad}" x2="${W - pad}" y1="${yy}" y2="${yy}" stroke="var(--warn)" stroke-dasharray="4 4" stroke-width="1.2"/>
+      <text x="${W - pad}" y="${yy - 4}" text-anchor="end" font-size="11" fill="var(--warn)">preço usado na conta: ${fmt(now)}</text>`;
+  }
+  return `<div class="spark"><p>Preço médio de venda por dia, últimos ${series.length} dias</p>
+    <svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Gráfico do preço médio de venda por dia">
+      <line x1="${pad}" x2="${W - pad}" y1="${Hh - bottom}" y2="${Hh - bottom}" stroke="var(--rule)" stroke-width="1"/>
+      <text x="${pad}" y="10" font-size="11" fill="var(--muted)">máx. ${fmt(max)}</text>
+      <text x="${pad}" y="${Hh - 3}" font-size="11" fill="var(--muted)">mín. ${fmt(min)}</text>
+      ${nowLine}
+      <polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/>
+      <circle cx="${x(last.t)}" cy="${y(last.p)}" r="3.5" fill="var(--ink)"/>
+    </svg></div>`;
+}
+function receiptHtml(d){
+  const L = [...d.receipt];
+  const lines = L.map(([a,b,cls]) => `<div class="ln ${cls || ''}"><span>${a}</span><span>${b}</span></div>`).join('');
+  let extra = '';
+  if (d.avgProfit != null && d.hist) extra += `<p class="note">Pela média da semana (${fmt(d.hist.avg)}), o lucro seria <b>${signed(d.avgProfit)}</b> por unidade.</p>`;
+  if (d.note) extra += `<p class="note">${d.note}</p>`;
+  return `<div class="receipt">${lines}${extra}</div>` + (d.hist ? sparkline(d.hist.series, d.sellPrice) : '');
+}
+const isGain = d => d.profit > 0 && !d.weak;
+const kg = n => n.toLocaleString('pt-BR', {maximumFractionDigits: 1}) + ' kg';
+function stepsFor(d){
+  const Q = qty(), S = [];
+  const rate = 1 - taxRate() - (d.mode === 'order' ? 0.025 : 0);
+  const minSell = d.cost / rate;
+  const sellStep = where => d.mode === 'order'
+    ? `Em ${where}, anuncie por <b>${fmt(d.sellPrice)}</b> cada. Não anuncie por menos de <b>${fmt(minSell)}</b>: abaixo disso você tem prejuízo.`
+    : `Em ${where}, venda na hora para quem está pagando <b>${fmt(d.sellPrice)}</b> cada. Se o pedido de compra cair para menos de <b>${fmt(minSell)}</b>, pare: dá prejuízo.`;
+  if (d.kind === 'transport' || d.kind === 'bm'){
+    S.push(`Em ${esc(d.buyCity)}, compre <b>${fmt(Q)} unidades</b> por cerca de <b>${fmt(d.buyPrice)}</b> cada (total de ${fmt(d.buyPrice * Q)}). Não pague mais de <b>${fmt(d.net)}</b> por unidade: acima disso o lucro some.`);
+    const w = weightOf(d.weightId), dest = d.kind === 'bm' ? 'o Black Market, em Caerleon' : esc(d.sellCity);
+    if (w){
+      const total = w * Q, trips = cap() ? Math.ceil(total / cap()) : 0;
+      S.push(`Leve tudo até ${dest}. A carga pesa ${kg(total)}${trips ? `, o que dá <b>${trips === 1 ? '1 viagem' : trips + ' viagens'}</b> com a sua montaria` : ''}. Cuidado com zonas vermelhas e pretas no caminho.`);
+    } else S.push(`Leve tudo até ${dest}.`);
+    S.push(d.kind === 'bm'
+      ? `No Black Market, venda direto para os pedidos de compra por <b>${fmt(d.sellPrice)}</b> cada. Se o pedido cair para menos de <b>${fmt(minSell)}</b>, pare: dá prejuízo.`
+      : sellStep(esc(d.sellCity)));
+  } else {
+    const crafts = Math.ceil(Q / d.made);
+    const total = d.mats.reduce((s, m) => s + m.price * m.n * crafts, 0);
+    S.push(`Em ${esc(d.buyCity)}, compre os materiais para ${fmt(Q)} unidades: ${d.mats.map(m => `<b>${fmt(m.n * crafts)} × ${esc(label(m.id))}</b>`).join(', ')}. Isso custa cerca de ${fmt(total)}.`);
+    S.push(`${d.kind === 'refine' ? 'Refine' : 'Fabrique'} ${d.whereText}. O jogo devolve cerca de ${pct(d.rrr)} do material${d.mats.some(m => !m.ret) ? ' (menos os artefatos)' : ''}, que você usa de novo. Por isso cada unidade sai por <b>${fmt(d.cost)}</b>.`);
+    S.push(sellStep(esc(d.sellCity)));
+  }
+  if (d.hist && d.hist.daily >= 1 && d.mode === 'order'){
+    const days = Q / d.hist.daily;
+    S.push(`A cidade vende cerca de ${fmt(d.hist.daily)} por dia. Suas ${fmt(Q)} unidades devem vender em ${days <= 1 ? '1 dia ou menos' : `uns ${Math.ceil(days)} dias`}, se ninguém anunciar mais barato.`);
+  }
+  return S;
+}
+function dealHtml(d){
+  const gain = isGain(d);
+  const tags = [];
+  if (gain) tags.push('<span class="tag gain">Dá lucro</span>');
+  else if (d.profit > 0) tags.push('<span class="tag warn">Lucro pequeno demais</span>');
+  else tags.push('<span class="tag loss">Dá prejuízo</span>');
+  if (gain && d.checked) tags.push(d.safe ? '<span class="tag gain">Seguro</span>' : '<span class="tag warn">Atenção</span>');
+  const facts = [trustFact(d.prices), ...(d.facts || []).filter(f => !(QTY_OVERRIDE && f[3] === 'qty'))];
+  const w = d.weightId ? weightOf(d.weightId) : 0;
+  if (gain && w && cap()){
+    const fit = Math.floor(cap() / w);
+    facts.push(['info', `Pesa ${w.toLocaleString('pt-BR')} kg. Cabem ${fmt(fit)} na sua montaria: ${signed(Math.round(d.profit) * fit)} de lucro por viagem.`]);
+  }
+  return `<article class="deal ${gain ? 'gain' : 'loss'}${gain && d.checked && !d.safe ? ' caution' : ''}">
+    <div class="deal-main">
+      <div class="deal-what"><div class="tags">${tags.join('')}</div><b>${esc(d.title)}</b><span class="how">${d.how}</span></div>
+      <div class="deal-result"><strong>${signed(d.profit)}</strong><span>prata por unidade</span>
+        <em>Contas para ${fmt(qty())} unidades</em></div>
+    </div>
+    <dl class="sum4">
+      <div><dt>Você gasta</dt><dd>${fmt(Math.round(d.cost) * qty())}</dd></div>
+      <div><dt>Você recebe</dt><dd>${fmt((Math.round(d.cost) + Math.round(d.profit)) * qty())}</dd></div>
+      <div><dt>${d.profit >= 0 ? 'Você lucra' : 'Você perde'}</dt><dd class="${d.profit >= 0 ? 'g' : 'l'}">${signed(Math.round(d.profit) * qty())}</dd></div>
+      <div><dt>Retorno sobre o gasto</dt><dd class="${d.profit >= 0 ? 'g' : 'l'}">${pct(d.profit / d.cost)}</dd></div>
+    </dl>
+    <ul class="facts">${facts.map(([c, t, todo]) => `<li class="${c}"><span>${esc(t)}${todo ? `<span class="do">${esc(todo)}</span>` : ''}</span></li>`).join('')}</ul>
+    ${gain ? `<details ${d.openSteps ? 'open' : ''}><summary>Como fazer, passo a passo</summary><ol class="steps">${stepsFor(d).map(x => `<li>${x}</li>`).join('')}</ol></details>` : ''}
+    <details><summary>Ver a conta</summary>${receiptHtml(d)}</details>
+  </article>`;
+}
+function refreshHtml(deals, missingByCity){
+  const byCity = {};
+  const add = (c, id) => { (byCity[c] = byCity[c] || new Set()).add(label(id)); };
+  for (const d of deals) for (const p of d.prices) if (ageMin(p.d) > 360 && p.id && p.city) add(p.city, p.id);
+  for (const [c, ids] of Object.entries(missingByCity || {})) ids.forEach(id => add(c, id));
+  const cities = Object.keys(byCity);
+  if (!cities.length) return '';
+  const total = cities.reduce((s, c) => s + byCity[c].size, 0);
+  return `<details class="fold"><summary>Preços para atualizar no jogo (${total})</summary>
+    <p>Com o Albion Data Client ligado, abra estes itens no mercado de cada cidade e clique de novo em Mostrar o que dá lucro.</p>
+    <div class="refresh">${cities.map(c => {
+      const items = [...byCity[c]];
+      const shown = items.slice(0, 12).join(', ') + (items.length > 12 ? ` e mais ${items.length - 12}` : '');
+      return `<div>${city(c)}<span class="items">${esc(shown)}</span></div>`;
+    }).join('')}</div></details>`;
+}
+function renderDeals(box, deals, missing, missingByCity){
+  const gains = deals.filter(isGain).sort((a,b) => (b.checked && b.safe) - (a.checked && a.safe) || b.profit - a.profit);
+  const losses = deals.filter(d => !isGain(d)).sort((a,b) => b.profit - a.profit);
+  let html = '';
+  if (gains.length){
+    const safe = gains.filter(d => d.checked && d.safe).length;
+    html += `<h2 class="group-title">Dá lucro agora (${gains.length}${safe ? `, ${safe} seguros` : ''})</h2><div class="list" id="${box.id}-gains"></div>`;
+  } else {
+    html += '<p class="empty">Nada está dando lucro com essas escolhas agora. Tente marcar mais cidades ou mudar a forma de vender.</p>';
+  }
+  if (losses.length) html += `<details class="fold"><summary>Não compensa agora (${losses.length})</summary><div class="list">${losses.map(dealHtml).join('')}</div></details>`;
+  if (missing.length) html += `<details class="fold"><summary>Faltam preços (${missing.length})</summary><p>Ninguém consultou estes itens nas cidades escolhidas recentemente.</p><p>${missing.map(esc).join(', ')}</p></details>`;
+  html += refreshHtml(deals, missingByCity);
+  box.innerHTML = html;
+  const list = $(`${box.id}-gains`);
+  if (!list) return;
+  gains.forEach((d, i) => { d.openSteps = i === 0; });
+  let shown = 0;
+  const step = 15;
+  const more = document.createElement('button');
+  more.className = 'showmore'; more.type = 'button';
+  const page = () => {
+    list.insertAdjacentHTML('beforeend', gains.slice(shown, shown + step).map(dealHtml).join(''));
+    shown += step;
+    if (shown < gains.length){ more.textContent = `Mostrar mais ${Math.min(step, gains.length - shown)} de ${gains.length - shown} restantes`; list.after(more); }
+    else more.remove();
+  };
+  more.addEventListener('click', page);
+  page();
+}
+function verdict(el, deals, phrase){
+  const gains = deals.filter(isGain);
+  const safe = gains.filter(d => d.checked && d.safe).sort((a,b) => b.profit - a.profit)[0];
+  const any = gains.sort((a,b) => b.profit - a.profit)[0];
+  if (safe) el.innerHTML = phrase(safe) + ' Vende bem e o preço está normal.';
+  else if (any) el.innerHTML = phrase(any) + ' Mas leia os avisos antes de investir.';
+  else el.innerHTML = '<span class="muted">Nada dá lucro com essas escolhas agora.</span>';
+}
+async function withHistory(statusEl, deals, quality, limit = HIST_LIMIT){
+  statusEl = statusEl || {textContent: ''};
+  const top = deals.filter(isGain).sort((a,b) => b.profit - a.profit).slice(0, limit);
+  if (!top.length) return;
+  statusEl.textContent = 'Conferindo as vendas da última semana…';
+  const pairs = [];
+  for (const d of top){ pairs.push({id: d.sellId, city: d.sellCity}); if (d.buyId) pairs.push({id: d.buyId, city: d.buyCity}); }
+  let H = null;
+  try { H = await fetchHistory(pairs, quality); } catch (_) { H = null; }
+  if (!H){ statusEl.textContent = 'Não foi possível conferir o histórico de vendas agora.'; return; }
+  top.forEach(d => assess(d, H));
+  const rest = deals.filter(isGain).length - top.length;
+  statusEl.textContent = rest > 0 ? `O histórico de vendas foi conferido nas ${top.length} melhores oportunidades.` : '';
+}
+
+/* ---------- controles ---------- */
+function fillSelect(el, opts, value){
+  el.innerHTML = opts.map(([v,t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join('');
+  if (value != null) el.value = value;
+}
+function towns(el, name, checked){
+  el.innerHTML = CITIES.map(c => `<label class="town" style="--c:var(--c-${cityKey(c)})"><input type="checkbox" name="${name}" value="${c}" ${checked.includes(c) ? 'checked' : ''}><i class="shield" aria-hidden="true"></i>${c}</label>`).join('');
+}
+const checked = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+
+function presetItems(kind){
+  const ids = [];
+  if (kind === 'refinados' || kind === 'brutos'){
+    const bases = kind === 'brutos' ? RES_BASES : RES_BASES.map(b => REF_OF[b]);
+    for (const b of bases) for (const t of TIERS) ids.push(...variants(`T${t}_${b}`));
+  } else {
+    for (const b of COMMON_EQUIP) for (const t of TIERS) ids.push(...variants(`T${t}_${b}`).slice(0, kind === 'bm' ? 4 : 3));
+  }
+  return ids.filter(id => info(id));
+}
+
+/* busca de itens com lista de escolhidos */
+function listPicker(el, key, filter){
+  let picked = store.get(key, []);
+  el.innerHTML = `<label class="f"><span>Buscar item</span><input type="search" placeholder="Ex.: espada larga, tábuas, bolsa" autocomplete="off"></label>
+    <ul class="results"></ul><div class="chips"></div><small class="help">Cada item escolhido entra com os encantamentos .0 a .3.</small>`;
+  const input = el.querySelector('input'), results = el.querySelector('.results'), chips = el.querySelector('.chips');
+  const drawChips = () => {
+    chips.innerHTML = picked.map((id, i) => `<span class="chip">${esc(label(id).replace(/\.0\)$/, ')'))}<button type="button" data-i="${i}" aria-label="Remover ${esc(label(id))}">×</button></span>`).join('');
+    chips.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { picked.splice(+b.dataset.i, 1); store.set(key, picked); drawChips(); }));
+  };
+  input.addEventListener('input', () => {
+    results.innerHTML = searchItems(input.value, filter).map(x => `<li><button type="button" data-id="${x.id}">${esc(DB[x.id][0])}<small>Tier ${x.t}</small></button></li>`).join('');
+    results.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      if (!picked.includes(b.dataset.id)) picked.push(b.dataset.id);
+      store.set(key, picked); drawChips(); input.value = ''; results.innerHTML = ''; input.focus();
+    }));
+  });
+  drawChips();
+  return { ids: () => picked.flatMap(variants), count: () => picked.length };
+}
+function setupKind(name, pickerEl){
+  const sync = () => { pickerEl.hidden = radio(name) !== 'mine'; };
+  document.querySelectorAll(`input[name="${name}"]`).forEach(i => i.addEventListener('change', sync));
+  sync();
+}
+
+function stamp(){
+  $('g-last').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+async function withBusy(btn, statusEl, fn){
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Buscando preços…';
+  statusEl.textContent = '';
+  try { await fn(); stamp(); }
+  catch (err){
+    const msg = err instanceof TypeError
+      ? 'Não foi possível buscar os preços. Confira sua internet. Se você abriu o painel pela prévia do Claude, baixe o arquivo e abra no navegador.'
+      : err.message;
+    statusEl.innerHTML = `<span class="err">${esc(msg)}</span>`;
+  }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+
+/* ---------- buscas (usadas pelas abas e pelo chat) ---------- */
+let tPick, bPick, craftFam = 'MAIN_SWORD';
+async function scanTransport({ids, orig, dest, mode = 'order', minM = 0.03, q = '1'}){
+  const P = await fetchPrices(ids, [...new Set([...orig, ...dest])], q);
+  const deals = [], missing = [];
+  for (const id of ids){
+    let best = null;
+    for (const o of orig){
+      const b = P.get(id, o); if (!b || !b.sell) continue;
+      for (const d of dest){
+        if (d === o) continue;
+        const s = sellField(P.get(id, d), mode); if (!s) continue;
+        const profit = fees(s.p, mode).net - b.sell;
+        if (!best || profit > best.profit) best = {o, d, b, s, profit};
+      }
+    }
+    if (!best){ missing.push(label(id)); continue; }
+    const sale = saleLines(best.s.p, mode, best.d);
+    const margin = best.profit / best.b.sell;
+    deals.push({
+      title: label(id), how: `Compre em ${city(best.o)} e venda em ${city(best.d)}`,
+      kind: 'transport', net: fees(best.s.p, mode).net,
+      profit: best.profit, weak: best.profit > 0 && margin < minM, mode,
+      sellId: id, sellCity: best.d, sellPrice: best.s.p, buyId: id, buyCity: best.o, buyPrice: best.b.sell, cost: best.b.sell,
+      weightId: id,
+      prices: [{id, city: best.o, d: best.b.sellDate}, {id, city: best.d, d: best.s.d}],
+      receipt: [[`Você compra em ${best.o}`, fmt(best.b.sell)], ...sale.L, ['Lucro por unidade', signed(best.profit), 'total']],
+      note: best.profit > 0 && margin < minM ? `O lucro é de só ${pct(margin)}, abaixo do mínimo escolhido.` : ''
+    });
+  }
+  return {deals, missing};
+}
+async function scanBM({ids, orig, minM = 0.03, q = '1'}){
+  const P = await fetchPrices(ids, [...orig, BM], q);
+  const deals = [], missing = [];
+  for (const id of ids){
+    const bm = P.get(id, BM);
+    let best = null;
+    for (const o of orig){
+      const b = P.get(id, o); if (!b || !b.sell) continue;
+      if (!best || b.sell < best.b.sell) best = {o, b};
+    }
+    if (!bm || !bm.buy || !best){ missing.push(label(id)); continue; }
+    const sale = saleLines(bm.buy, 'instant', 'no Black Market');
+    const profit = sale.net - best.b.sell;
+    const margin = profit / best.b.sell;
+    deals.push({
+      title: label(id), how: `Compre em ${city(best.o)} e entregue no ${city('Black Market')}`,
+      kind: 'bm', net: sale.net,
+      profit, weak: profit > 0 && margin < minM, mode: 'instant',
+      sellId: id, sellCity: BM, sellPrice: bm.buy, buyId: id, buyCity: best.o, buyPrice: best.b.sell, cost: best.b.sell,
+      weightId: id,
+      prices: [{id, city: best.o, d: best.b.sellDate}, {id, city: 'Caerleon', d: bm.buyDate}],
+      receipt: [[`Você compra em ${best.o}`, fmt(best.b.sell)], ...sale.L, ['Lucro por unidade', signed(profit), 'total']],
+      note: 'No Black Market você sempre vende na hora, então não há taxa de anúncio.' + (margin < minM && profit > 0 ? ` O lucro é de só ${pct(margin)}, abaixo do mínimo escolhido.` : '')
+    });
+  }
+  return {deals, missing};
+}
+
+/* produção (refino e crafting) */
+async function runProduction(o){
+  const {plan, buyC, sellC, mode, rrr, fee, quality, verb, kind, whereText} = o;
+  const matIds = plan.flatMap(p => p.rec[1].map(r => r[0]));
+  const [PM, PS] = await Promise.all([
+    fetchPrices(matIds, [buyC], null),
+    fetchPrices(plan.map(p => p.out), [sellC], quality)
+  ]);
+  const deals = [], missing = [], missingByCity = {};
+  const need = (c, id) => { (missingByCity[c] = missingByCity[c] || []).push(id); };
+  for (const p of plan){
+    const [made, res] = p.rec;
+    const lack = [], L = [], prices = [], mats = [];
+    let mat = 0, back = 0;
+    for (const [id, n, ret] of res){
+      const r = PM.get(id, buyC);
+      if (!r || !r.sell){ lack.push(label(id)); need(buyC, id); continue; }
+      mat += r.sell * n; if (ret) back += r.sell * n * rrr;
+      mats.push({id, n, price: r.sell, ret});
+      prices.push({id, city: buyC, d: r.sellDate});
+      L.push([`${n} × ${label(id)} (${fmt(r.sell)} cada${ret ? '' : ', não volta'})`, fmt(r.sell * n)]);
+    }
+    const s = sellField(PS.get(p.out, sellC), mode);
+    if (!s){ lack.push(`${label(p.out)} em ${sellC}`); need(sellC, p.out); }
+    if (lack.length){ missing.push(`${label(p.out)} (falta ${lack.join(', ')})`); continue; }
+    prices.push({id: p.out, city: sellC, d: s.d});
+    const cost = (mat - back) / made + fee;
+    L.push([made > 1 ? `Material para ${made} unidades` : 'Material para 1 unidade', fmt(mat), 'sum'],
+           [`O jogo devolve ${pct(rrr)} do material${res.some(r => !r[2]) ? ' (menos artefatos)' : ''}`, '−' + fmt(back)]);
+    if (made > 1) L.push([`Dividido por ${made} unidades fabricadas`, fmt((mat - back) / made)]);
+    if (fee) L.push(['Taxa da estação', '+' + fmt(fee)]);
+    const sale = saleLines(s.p, mode, sellC);
+    const profit = sale.net - cost;
+    L.push(['Custo de cada unidade', fmt(cost), 'sum'], ...sale.L, ['Lucro por unidade', signed(profit), 'total']);
+    deals.push({
+      title: `${verb} ${label(p.out)}`, how: `Materiais em ${city(buyC)}, venda em ${city(sellC)}`,
+      kind, net: sale.net, mats, made, rrr, whereText, buyCity: buyC,
+      profit, mode, cost, sellId: p.out, sellCity: sellC, sellPrice: s.p,
+      prices, receipt: L, note: p.note || ''
+    });
+  }
+  return {deals, missing, missingByCity};
+}
+function refinePlan(res, e){
+  const ref = REF_OF[res], plan = [], noRecipe = [];
+  for (const t of TIERS){
+    const out = e ? `T${t}_${ref}_LEVEL${e}@${e}` : `T${t}_${ref}`;
+    const rec = recipeOf(out);
+    if (!rec){ noRecipe.push(label(out)); continue; }
+    plan.push({out, rec, note: `Receita oficial: ${rec[1].map(([id, n]) => `${n} × ${label(id)}`).join(' + ')}.`});
+  }
+  return {plan, noRecipe};
+}
+function refineWhereText(res, city, rrr){
+  const bonus = REFINE_BONUS[res];
+  if (city === bonus) return `em ${bonus}, a cidade com bônus${rrr >= 0.5 ? ', usando foco' : ''}`;
+  return `na estação de refino de ${city}${rrr >= 0.4 ? ', usando foco' : ''}`;
+}
+async function scanRefine({res, e = 0, buyC, sellC, mode = 'order', rrr, fee = 0}){
+  const {plan, noRecipe} = refinePlan(res, e);
+  if (!plan.length) throw new Error('Esse recurso não tem esse encantamento no jogo. Escolha outro encantamento.');
+  const r = await runProduction({plan, buyC, sellC, mode, rrr, fee, quality: null, verb: 'Refinar', kind: 'refine', whereText: refineWhereText(res, buyC, rrr)});
+  r.missing.push(...noRecipe.map(n => `${n} (não existe no jogo)`));
+  return r;
+}
+function craftPlan(fam, e){
+  const plan = [];
+  for (let t = 1; t <= 8; t++){
+    const base = `T${t}_${fam}`;
+    if (!DB[base]) continue;
+    const out = e ? `${base}@${e}` : base;
+    const rec = recipeOf(out);
+    if (rec) plan.push({out, rec, note: `Receita oficial: ${rec[1].map(([id, n]) => `${n} × ${label(id)}`).join(' + ')}${rec[0] > 1 ? `, rende ${rec[0]} unidades` : ''}.`});
+  }
+  return plan;
+}
+async function scanCraft({fam, e = 0, buyC, sellC, mode = 'order', rrr = 0.152, fee = 0, q = '1'}){
+  const plan = craftPlan(fam, e);
+  if (!plan.length) throw new Error('Esse item não tem esse encantamento no jogo. Escolha outro encantamento.');
+  return runProduction({plan, buyC, sellC, mode, rrr, fee, quality: q, verb: 'Fabricar', kind: 'craft', whereText: 'na estação de fabricação certa para esse item'});
+}
+
+/* ---------- abas com configurações ---------- */
+async function runTransport(){
+  await withBusy($('t-run'), $('t-status'), async () => {
+    const kind = radio('t-kind');
+    const ids = kind === 'mine' ? tPick.ids() : presetItems(kind);
+    if (!ids.length) throw new Error('Busque e escolha pelo menos um item.');
+    const orig = checked('t-orig'), dest = checked('t-dest');
+    if (!orig.length || !dest.length) throw new Error('Marque pelo menos uma cidade para comprar e uma para vender.');
+    const q = $('t-q').value;
+    const {deals, missing} = await scanTransport({ids, orig, dest, mode: radio('t-mode'), minM: (+$('t-min').value || 0) / 100, q});
+    await withHistory($('t-status'), deals, q);
+    renderDeals($('t-out'), deals, missing);
+    verdict($('t-verdict'), deals, d => `Melhor viagem agora: ${esc(d.title)}, de ${esc(d.buyCity)} para ${esc(d.sellCity)}. Você ganha <span class="g">${signed(d.profit)} prata</span> por unidade.`);
+  });
+}
+async function runBM(){
+  await withBusy($('b-run'), $('b-status'), async () => {
+    const ids = radio('b-kind') === 'mine' ? bPick.ids() : presetItems('bm');
+    if (!ids.length) throw new Error('Busque e escolha pelo menos um item.');
+    const orig = checked('b-orig');
+    if (!orig.length) throw new Error('Marque pelo menos uma cidade para comprar.');
+    const q = $('b-q').value;
+    const {deals, missing} = await scanBM({ids, orig, minM: (+$('b-min').value || 0) / 100, q});
+    await withHistory($('b-status'), deals, q);
+    renderDeals($('b-out'), deals, missing);
+    verdict($('b-verdict'), deals, d => `Melhor entrega agora: ${esc(d.title)}, comprando em ${esc(d.buyCity)}. Você ganha <span class="g">${signed(d.profit)} prata</span> por unidade.`);
+  });
+}
+function refineWhere(){
+  const res = $('r-res').value, bonus = REFINE_BONUS[res];
+  const cur = document.querySelector('input[name="r-where"]:checked');
+  const v = cur ? cur.value : '36.7';
+  $('r-where').innerHTML = WHERE.map(([val,t,s]) => `<label class="choice"><input type="radio" name="r-where" value="${val}" ${val === v ? 'checked' : ''}><span><b>${t.replace('com bônus', 'com bônus (' + bonus + ')')}</b><small>${s}</small></span></label>`).join('');
+  document.querySelectorAll('input[name="r-where"]').forEach(i => i.addEventListener('change', () => { $('r-rrr').value = i.value; }));
+  const what = {PLANKS:'tábuas',METALBAR:'barras de metal',LEATHER:'couro trabalhado',CLOTH:'tecido',STONEBLOCK:'blocos de pedra'}[REF_OF[res]];
+  $('r-hint').textContent = `Fazer ${what} rende mais em ${bonus}, a cidade com bônus para esse refino.`;
+}
+async function runRefine(){
+  await withBusy($('r-run'), $('r-status'), async () => {
+    const res = $('r-res').value;
+    const r = await scanRefine({res, e: +$('r-ench').value, buyC: $('r-buy').value, sellC: $('r-sell').value, mode: radio('r-mode'),
+      rrr: (+$('r-rrr').value || 0) / 100, fee: +$('r-fee').value || 0});
+    await withHistory($('r-status'), r.deals, null);
+    renderDeals($('r-out'), r.deals, r.missing, r.missingByCity);
+    verdict($('r-verdict'), r.deals, d => `${esc(d.title)} é o que mais rende: <span class="g">${signed(d.profit)} prata</span> por unidade.`);
+  });
+}
+function craftPicker(){
+  const el = $('c-picker');
+  el.innerHTML = `<label class="f"><span>O que você quer fabricar?</span><input type="search" placeholder="Ex.: espada, poção de cura, bolsa" autocomplete="off"></label>
+    <ul class="results"></ul><p class="help">Escolhido: <span class="picked" id="c-picked"></span></p>`;
+  const input = el.querySelector('input'), results = el.querySelector('.results');
+  const show = () => {
+    const first = [1,2,3,4,5,6,7,8].map(t => `T${t}_${craftFam}`).find(k => DB[k]);
+    $('c-picked').textContent = first ? `${label(first)} e os outros tiers` : craftFam;
+  };
+  input.addEventListener('input', () => {
+    const found = searchItems(input.value, x => CRAFT_CATS.includes(x.c) && !x.id.includes('@') && DB[x.id][4]['0']);
+    const seen = new Set();
+    results.innerHTML = found.filter(x => { const f = x.id.replace(/^T\d_/, ''); if (seen.has(f)) return false; seen.add(f); return true; })
+      .map(x => `<li><button type="button" data-fam="${x.id.replace(/^T\d_/, '')}">${esc(DB[x.id][0])}<small>Todos os tiers deste item</small></button></li>`).join('');
+    results.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      craftFam = b.dataset.fam; store.set('craft', craftFam); show(); input.value = ''; results.innerHTML = '';
+    }));
+  });
+  show();
+}
+async function runCraft(){
+  await withBusy($('c-run'), $('c-status'), async () => {
+    const q = $('c-q').value;
+    const r = await scanCraft({fam: craftFam, e: +$('c-ench').value, buyC: $('c-buy').value, sellC: $('c-sell').value, mode: radio('c-mode'),
+      rrr: (+$('c-rrr').value || 0) / 100, fee: +$('c-fee').value || 0, q});
+    await withHistory($('c-status'), r.deals, q);
+    renderDeals($('c-out'), r.deals, r.missing, r.missingByCity);
+    verdict($('c-verdict'), r.deals, d => `${esc(d.title)} é o que mais rende: <span class="g">${signed(d.profit)} prata</span> por unidade.`);
+  });
+}
+
+/*__CHAT__*/
+
+/* ---------- inicialização ---------- */
+const RUNNERS = {transporte:runTransport, bm:runBM, refino:runRefine, craft:runCraft};
+let current = 'chat';
+function showTab(name){
+  current = name;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== name);
+  store.set('tab', name);
+}
+function init(){
+  const cityOpts = CITIES.map(c => [c,c]);
+  const enchOpts = [['0','Sem encantamento'],['1','.1 (verde)'],['2','.2 (azul)'],['3','.3 (roxo)'],['4','.4 (dourado)']];
+  ['t-q','b-q','c-q'].forEach(id => fillSelect($(id), QUALITIES, '1'));
+  fillSelect($('r-ench'), enchOpts, '0'); fillSelect($('c-ench'), enchOpts, '0');
+  fillSelect($('r-buy'), cityOpts, 'Fort Sterling'); fillSelect($('r-sell'), cityOpts, 'Fort Sterling');
+  fillSelect($('c-buy'), cityOpts, 'Martlock'); fillSelect($('c-sell'), cityOpts, 'Martlock');
+  towns($('t-orig'), 't-orig', CITIES); towns($('t-dest'), 't-dest', CITIES);
+  towns($('b-orig'), 'b-orig', CITIES.filter(c => c !== 'Caerleon'));
+  tPick = listPicker($('t-picker'), 'titems');
+  bPick = listPicker($('b-picker'), 'bitems', x => ['weapons','head','armors','shoes','capes','offhands','bags'].includes(x.c) && !x.id.includes('@'));
+  setupKind('t-kind', $('t-picker')); setupKind('b-kind', $('b-picker'));
+  craftFam = store.get('craft', 'MAIN_SWORD');
+  if (![1,2,3,4,5,6,7,8].some(t => DB[`T${t}_${craftFam}`])) craftFam = 'MAIN_SWORD';
+  craftPicker();
+  refineWhere();
+  initChat();
+
+  $('r-res').addEventListener('change', () => {
+    const bonus = REFINE_BONUS[$('r-res').value];
+    $('r-buy').value = bonus; $('r-sell').value = bonus;
+    refineWhere();
+  });
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $('t-run').addEventListener('click', runTransport);
+  $('b-run').addEventListener('click', runBM);
+  $('r-run').addEventListener('click', runRefine);
+  $('c-run').addEventListener('click', runCraft);
+
+  let timer = null;
+  $('g-auto').addEventListener('change', e => {
+    clearInterval(timer);
+    const run = () => { if (RUNNERS[current]) RUNNERS[current](); };
+    if (e.target.checked){ run(); timer = setInterval(run, 5 * 60 * 1000); }
+  });
+  $('g-premium').checked = store.get('premium', true);
+  $('g-qty').value = store.get('qty', 100);
+  $('g-cap').value = store.get('cap', 1000);
+  $('g-premium').addEventListener('change', () => store.set('premium', $('g-premium').checked));
+  $('g-qty').addEventListener('change', () => store.set('qty', qty()));
+  $('g-cap').addEventListener('change', () => store.set('cap', cap()));
+  const t = store.get('tab', 'chat'); if (RUNNERS[t] || t === 'chat') showTab(t);
+}
+init();
+</script>
+</body>
+</html>
